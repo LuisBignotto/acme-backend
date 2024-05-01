@@ -1,112 +1,87 @@
 package br.com.acmeairlines.users.service;
 
-import br.com.acmeairlines.users.dto.UserDTO;
-import br.com.acmeairlines.users.model.Address;
+import br.com.acmeairlines.users.dto.AddressDTO;
+import br.com.acmeairlines.users.dto.CreateUserDTO;
+import br.com.acmeairlines.users.dto.UpdateUserDTO;
+import br.com.acmeairlines.users.model.AddressModel;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.repository.UserRepository;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class UserService {
 
     @Autowired
-    private UserRepository repository;
+    private UserRepository userRepository;
 
-    public UserModel createUser(@Valid UserRegisterDTO data) {
-        if (repository.findByEmail(data.email()) != null) {
-            throw new IllegalArgumentException("Email already in use.");
-        }
-
-        if (repository.findByCpf(data.cpf()) != null) {
-            throw new IllegalArgumentException("CPF already in use.");
-        }
-
-        if (data.password().length() < 8) {
-            throw new IllegalArgumentException("Password too short.");
-        }
-
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
-        UserModel newUser = new UserModel(UUID.randomUUID().toString(), data.name(), data.email(), data.cpf(), encryptedPassword, null, data.active(), null, data.role());
-        return repository.save(newUser);
+    @Transactional
+    public UserModel createUser(CreateUserDTO createUserDTO) {
+        UserModel user = new UserModel();
+        user.setEmail(createUserDTO.email());
+        user.setCpf(createUserDTO.cpf());
+        user.setName(createUserDTO.name());
+        user.setPassword(createUserDTO.password());
+        return userRepository.save(user);
     }
 
-    public UserDataDTO updateUser(@Valid UserUpdateDTO data, String userId) {
-        UserModel user = repository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found."));
+    @Transactional(readOnly = true)
+    public Optional<UserModel> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
 
-        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Transactional(readOnly = true)
+    public Optional<UserModel> getUserByCpf(String cpf) {
+        return userRepository.findByCpf(cpf);
+    }
 
-        if (data.currentPassword() != null) {
-            boolean isCurrentPasswordValid = passwordEncoder.matches(data.currentPassword(), user.getPassword());
-            if (!isCurrentPasswordValid) {
-                throw new IllegalArgumentException("Current password is incorrect.");
-            }
-        }
+    @Transactional
+    public UserModel updateUser(Long id, UpdateUserDTO updateUserDTO) {
+        UserModel user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        user.setEmail(updateUserDTO.email());
+        user.setPassword(updateUserDTO.password());
+        user.setPhone(updateUserDTO.phone());
 
-        if (data.name() != null) {
-            user.setName(data.name());
-        }
+        updateAddresses(user, updateUserDTO.addressess());
 
-        if (data.email() != null) {
-            user.setEmail(data.email());
-        }
+        return userRepository.save(user);
+    }
 
-        if (data.password() != null && data.password().length() > 8) {
-            String encryptedPassword = passwordEncoder.encode(data.password());
-            user.setPassword(encryptedPassword);
-        }
-
-        if (data.phone() != null) {
-            user.setPhone(data.phone());
-        }
-
-        if (data.address() != null) {
-            if (user.getAddress() == null) {
-                user.setAddress(new Address(data.address()));
+    private void updateAddresses(UserModel user, Set<AddressDTO> addressDTOs) {
+        Set<AddressModel> updatedAddresses = new HashSet<>();
+        for (AddressDTO dto : addressDTOs) {
+            AddressModel address;
+            if (dto.id() != null) {
+                address = user.getAddresses().stream()
+                        .filter(a -> a.getId().equals(dto.id()))
+                        .findFirst()
+                        .orElse(new AddressModel());
             } else {
-                user.getAddress().updateAddress(data.address());
+                address = new AddressModel();
             }
+            address.setStreet(dto.street());
+            address.setNeighborhood(dto.neighborhood());
+            address.setZipcode(dto.zipcode());
+            address.setNumber(dto.number());
+            address.setComplement(dto.complement());
+            address.setCity(dto.city());
+            address.setState(dto.state());
+            address.setUser(user);
+            updatedAddresses.add(address);
         }
-
-        if (data.role() != null) {
-            user.setRole(data.role());
-        }
-
-        UserModel savedUser = repository.save(user);
-
-        return new UserDataDTO(savedUser);
+        user.getAddresses().clear();
+        user.getAddresses().addAll(updatedAddresses);
     }
 
-    public UserDataDTO findByEmail(String email) {
-        UserModel user = repository.findByEmail(email);
-        if (user != null) {
-            return new UserDataDTO(user);
-        }
-        return null;
+    @Transactional
+    public void deleteUser(Long id) {
+        UserModel user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        userRepository.delete(user);
     }
-
-    public UserDataDTO findByCpf(String cpf) {
-        UserModel user = repository.findByCpf(cpf);
-        if (user != null) {
-            return new UserDataDTO(user);
-        }
-        return null;
-    }
-
-    public void deleteUser(String id) {
-        repository.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found."));
-        repository.deleteById(id);
-    }
-
-    public Page<UserDTO> findUsers(Pageable pages) {
-        return repository.findByActive(true, pages)
-                .map(UserDTO::new);
-    }
-
 }

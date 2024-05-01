@@ -1,10 +1,10 @@
 package br.com.acmeairlines.users.dto;
 
-import java.util.List;
+import java.util.Set;
 
 public record UpdateUserDTO(
         String email,
         String phone,
         String password,
-        List<AddressDTO> addressess
+        Set<AddressDTO> addressess
 ) {}
