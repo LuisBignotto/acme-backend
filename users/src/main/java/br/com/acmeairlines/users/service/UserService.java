@@ -97,7 +97,7 @@ public class UserService {
                 address.setState(addressDTO.state());
             }
         }
-        
+
         return userRepository.save(user);
     }
 

@@ -31,8 +31,8 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/email/{email}")
-    public ResponseEntity<UserModel> getUserByEmail(@PathVariable String email) {
+    @GetMapping("/search")
+    public ResponseEntity<UserModel> getUserByEmail(@RequestParam String email) {
         Optional<UserModel> user = userService.getUserByEmail(email);
         return user.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
