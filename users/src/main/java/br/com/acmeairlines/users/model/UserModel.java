@@ -1,5 +1,6 @@
 package br.com.acmeairlines.users.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,6 +30,7 @@ public class UserModel {
     private String phone;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private AddressModel address;
 
     @ManyToMany(fetch = FetchType.EAGER)

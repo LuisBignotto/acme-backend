@@ -1,5 +1,6 @@
 package br.com.acmeairlines.users.service;
 
+import br.com.acmeairlines.users.dto.AddressDTO;
 import br.com.acmeairlines.users.dto.CreateUserDTO;
 import br.com.acmeairlines.users.dto.UpdateUserDTO;
 import br.com.acmeairlines.users.model.AddressModel;
@@ -44,30 +45,63 @@ public class UserService {
 
     @Transactional
     public UserModel updateUser(Long id, UpdateUserDTO updateUserDTO) {
-        UserModel user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-        user.setEmail(updateUserDTO.email());
-        user.setPassword(updateUserDTO.password());
-        user.setPhone(updateUserDTO.phone());
+        UserModel user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
-        AddressModel address = user.getAddress();
-        if (address == null) {
-            address = new AddressModel();
-            address.setUser(user);
+        if (updateUserDTO.email() != null) {
+            user.setEmail(updateUserDTO.email());
         }
-        address.setStreet(updateUserDTO.address().street());
-        address.setNeighborhood(updateUserDTO.address().neighborhood());
-        address.setZipcode(updateUserDTO.address().zipcode());
-        address.setNumber(updateUserDTO.address().number());
-        address.setComplement(updateUserDTO.address().complement());
-        address.setCity(updateUserDTO.address().city());
-        address.setState(updateUserDTO.address().state());
 
-        user.setAddress(address);
+        if (updateUserDTO.password() != null) {
+            user.setPassword(updateUserDTO.password());
+        }
 
+        if (updateUserDTO.phone() != null) {
+            user.setPhone(updateUserDTO.phone());
+        }
+
+        AddressDTO addressDTO = updateUserDTO.address();
+
+        if (addressDTO != null) {
+            AddressModel address = user.getAddress();
+            if (address == null) {
+                address = new AddressModel();
+                address.setUser(user);
+                user.setAddress(address);
+            }
+
+            if(addressDTO.street() != null){
+                address.setStreet(addressDTO.street());
+            }
+
+            if(addressDTO.neighborhood() != null){
+                address.setNeighborhood(addressDTO.neighborhood());
+            }
+
+            if(addressDTO.zipcode() != null){
+                address.setZipcode(addressDTO.zipcode());
+            }
+
+            if(addressDTO.number() != null){
+                address.setNumber(addressDTO.number());
+            }
+
+            if(addressDTO.complement() != null){
+                address.setComplement(addressDTO.complement());
+            }
+
+            if(addressDTO.city() != null){
+                address.setCity(addressDTO.city());
+            }
+
+            if(addressDTO.state() != null){
+                address.setState(addressDTO.state());
+            }
+        }
+        
         return userRepository.save(user);
     }
-    
+
+
     @Transactional
     public void deleteUser(Long id) {
         UserModel user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));

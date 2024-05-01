@@ -1,5 +1,6 @@
 package br.com.acmeairlines.users.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,5 +26,6 @@ public class AddressModel {
 
     @OneToOne
     @JoinColumn(name = "user_id")
+    @JsonBackReference
     private UserModel user;
 }
