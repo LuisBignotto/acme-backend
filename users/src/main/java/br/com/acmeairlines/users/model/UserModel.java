@@ -12,7 +12,7 @@ import java.util.Set;
 @Table(name = "users")
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of = "id")
 public class UserModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +20,7 @@ public class UserModel {
 
     @Column(unique = true)
     private String email;
+
     @Column(unique = true)
     private String cpf;
 
@@ -27,8 +28,8 @@ public class UserModel {
     private String password;
     private String phone;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<AddressModel> addresses = new HashSet<>();
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AddressModel address;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

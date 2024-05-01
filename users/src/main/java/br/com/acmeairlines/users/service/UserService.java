@@ -1,6 +1,5 @@
 package br.com.acmeairlines.users.service;
 
-import br.com.acmeairlines.users.dto.AddressDTO;
 import br.com.acmeairlines.users.dto.CreateUserDTO;
 import br.com.acmeairlines.users.dto.UpdateUserDTO;
 import br.com.acmeairlines.users.model.AddressModel;
@@ -10,9 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class UserService {
@@ -53,37 +50,24 @@ public class UserService {
         user.setPassword(updateUserDTO.password());
         user.setPhone(updateUserDTO.phone());
 
-        updateAddresses(user, updateUserDTO.addressess());
+        AddressModel address = user.getAddress();
+        if (address == null) {
+            address = new AddressModel();
+            address.setUser(user);
+        }
+        address.setStreet(updateUserDTO.address().street());
+        address.setNeighborhood(updateUserDTO.address().neighborhood());
+        address.setZipcode(updateUserDTO.address().zipcode());
+        address.setNumber(updateUserDTO.address().number());
+        address.setComplement(updateUserDTO.address().complement());
+        address.setCity(updateUserDTO.address().city());
+        address.setState(updateUserDTO.address().state());
+
+        user.setAddress(address);
 
         return userRepository.save(user);
     }
-
-    private void updateAddresses(UserModel user, Set<AddressDTO> addressDTOs) {
-        Set<AddressModel> updatedAddresses = new HashSet<>();
-        for (AddressDTO dto : addressDTOs) {
-            AddressModel address;
-            if (dto.id() != null) {
-                address = user.getAddresses().stream()
-                        .filter(a -> a.getId().equals(dto.id()))
-                        .findFirst()
-                        .orElse(new AddressModel());
-            } else {
-                address = new AddressModel();
-            }
-            address.setStreet(dto.street());
-            address.setNeighborhood(dto.neighborhood());
-            address.setZipcode(dto.zipcode());
-            address.setNumber(dto.number());
-            address.setComplement(dto.complement());
-            address.setCity(dto.city());
-            address.setState(dto.state());
-            address.setUser(user);
-            updatedAddresses.add(address);
-        }
-        user.getAddresses().clear();
-        user.getAddresses().addAll(updatedAddresses);
-    }
-
+    
     @Transactional
     public void deleteUser(Long id) {
         UserModel user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
