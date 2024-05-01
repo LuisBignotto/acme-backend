@@ -1,8 +1,5 @@
 package br.com.acmeairlines.users.controller;
 
-import br.com.acmeairlines.users.dto.UserDataDTO;
-import br.com.acmeairlines.users.dto.UserRegisterDTO;
-import br.com.acmeairlines.users.dto.UserUpdateDTO;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,24 +35,6 @@ public class UserController {
         return ResponseEntity.ok(userService.findByEmail(email));
     }
 
-    @GetMapping("/teste")
-    public ResponseEntity<String> teste() {
-        return ResponseEntity.ok("AEEEEEEE CARAIOOOOOO");
-    }
-
-//    @GetMapping
-//    public ResponseEntity<UserResponseDTO> getUser(HttpServletRequest request) {
-//        UserDataDTO user = userService.findByEmail(request.getRemoteUser());
-//
-//        if (user == null) {
-//            return ResponseEntity.notFound().build();
-//        }
-//
-//        List<BaggageModel> baggage = baggageService.findByUserId(user.id());
-//
-//        return ResponseEntity.ok(new UserResponseDTO(user, baggage));
-//    }
-
     @PutMapping("/update")
     @Transactional
     public ResponseEntity<UserDataDTO> updateUser(HttpServletRequest request, @RequestBody @Valid UserUpdateDTO data) {
@@ -71,7 +50,7 @@ public class UserController {
 
     @DeleteMapping
     @Transactional
-    public ResponseEntity deleteUser(HttpServletRequest request){
+    public ResponseEntity<Void> deleteUser(HttpServletRequest request){
         UserDataDTO user = userService.findByEmail(request.getRemoteUser());
         userService.deleteUser(user.id());
         return ResponseEntity.noContent().build();
