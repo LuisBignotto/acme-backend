@@ -20,17 +20,12 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/active")
-    public ResponseEntity<Page<UserDataDTO>> getActiveUsers(@PageableDefault(size = 10, sort = {"id"}) Pageable pages) {
+    @GetMapping
+    public ResponseEntity<Page<UserDataDTO>> getUsers(@PageableDefault(size = 10, sort = {"id"}) Pageable pages) {
         return ResponseEntity.ok(userService.findActiveUsers(pages));
     }
 
-    @GetMapping("/inactive")
-    public ResponseEntity<Page<UserDataDTO>> getInactiveUsers(@PageableDefault(size = 10, sort = {"id"}) Pageable pages) {
-        return ResponseEntity.ok(userService.findInactiveUsers(pages));
-    }
-
-    @GetMapping("/{email}")
+    @GetMapping("/email/{email}")
     public ResponseEntity<UserDataDTO> getUserByEmail(@PathVariable String email) {
         return ResponseEntity.ok(userService.findByEmail(email));
     }
@@ -48,26 +43,4 @@ public class UserController {
         return ResponseEntity.ok(newUser);
     }
 
-    @DeleteMapping
-    @Transactional
-    public ResponseEntity<Void> deleteUser(HttpServletRequest request){
-        UserDataDTO user = userService.findByEmail(request.getRemoteUser());
-        userService.deleteUser(user.id());
-        return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/register")
-    @Transactional
-    public ResponseEntity<UserDataDTO> registerWorker(@RequestBody @Valid UserRegisterDTO data){
-        UserDataDTO email = userService.findByEmail(data.email());
-        UserDataDTO cpf = userService.findByCpf(data.cpf());
-
-        if(email != null && cpf != null) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        UserModel newUser = userService.createUser(data);
-
-        return new ResponseEntity<>(new UserDataDTO(newUser), HttpStatus.CREATED);
-    }
 }

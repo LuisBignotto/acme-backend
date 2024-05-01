@@ -1,5 +1,6 @@
 package br.com.acmeairlines.users.service;
 
+import br.com.acmeairlines.users.dto.UserDTO;
 import br.com.acmeairlines.users.model.Address;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.repository.UserRepository;
@@ -103,17 +104,9 @@ public class UserService {
         repository.deleteById(id);
     }
 
-    public Page<UserDataDTO> findActiveUsers(Pageable pages) {
+    public Page<UserDTO> findUsers(Pageable pages) {
         return repository.findByActive(true, pages)
-                .map(UserDataDTO::new);
+                .map(UserDTO::new);
     }
 
-    public Page<UserDataDTO> findInactiveUsers(Pageable pages) {
-        return repository.findByActive(false, pages)
-                .map(UserDataDTO::new);
-    }
-
-//    public UserResponseDTO getUser(String id){
-//        return repository.findUser(id);
-//    }
 }
