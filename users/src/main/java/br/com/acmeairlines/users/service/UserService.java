@@ -7,6 +7,7 @@ import br.com.acmeairlines.users.model.AddressModel;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +19,16 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     @Transactional
     public UserModel createUser(CreateUserDTO createUserDTO) {
         UserModel user = new UserModel();
         user.setEmail(createUserDTO.email());
         user.setCpf(createUserDTO.cpf());
         user.setName(createUserDTO.name());
-        user.setPassword(createUserDTO.password());
+        user.setPassword(passwordEncoder.encode(createUserDTO.password()));
         return userRepository.save(user);
     }
 
@@ -52,7 +56,7 @@ public class UserService {
         }
 
         if (updateUserDTO.password() != null) {
-            user.setPassword(updateUserDTO.password());
+            user.setPassword(passwordEncoder.encode(updateUserDTO.password()));
         }
 
         if (updateUserDTO.phone() != null) {
