@@ -36,6 +36,11 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<UserModel> getUserById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
     public Optional<UserModel> getUserByCpf(String cpf) {
         return userRepository.findByCpf(cpf);
     }
