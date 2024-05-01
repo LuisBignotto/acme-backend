@@ -1,6 +1,5 @@
 package br.com.acmeairlines.users.controller;
 
-import br.com.acmeairlines.users.dto.UserResponseDTO;
 import br.com.acmeairlines.users.dto.UserDataDTO;
 import br.com.acmeairlines.users.dto.UserRegisterDTO;
 import br.com.acmeairlines.users.dto.UserUpdateDTO;
@@ -14,35 +13,34 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("users")
+@RequestMapping("/users")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public ResponseEntity<Page<UserDataDTO>> getActiveUsers(@PageableDefault(size = 10, sort = {"id"}) Pageable pages) {
         return ResponseEntity.ok(userService.findActiveUsers(pages));
     }
 
     @GetMapping("/inactive")
-    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public ResponseEntity<Page<UserDataDTO>> getInactiveUsers(@PageableDefault(size = 10, sort = {"id"}) Pageable pages) {
         return ResponseEntity.ok(userService.findInactiveUsers(pages));
     }
 
     @GetMapping("/{email}")
-//    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public ResponseEntity<UserDataDTO> getUserByEmail(@PathVariable String email) {
         return ResponseEntity.ok(userService.findByEmail(email));
+    }
+
+    @GetMapping("/teste")
+    public ResponseEntity<String> teste() {
+        return ResponseEntity.ok("AEEEEEEE CARAIOOOOOO");
     }
 
 //    @GetMapping
@@ -81,7 +79,6 @@ public class UserController {
 
     @PostMapping("/register")
     @Transactional
-    @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public ResponseEntity<UserDataDTO> registerWorker(@RequestBody @Valid UserRegisterDTO data){
         UserDataDTO email = userService.findByEmail(data.email());
         UserDataDTO cpf = userService.findByCpf(data.cpf());

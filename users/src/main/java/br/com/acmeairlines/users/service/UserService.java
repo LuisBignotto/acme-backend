@@ -1,6 +1,5 @@
 package br.com.acmeairlines.users.service;
 
-import br.com.acmeairlines.users.dto.UserResponseDTO;
 import br.com.acmeairlines.users.dto.UserDataDTO;
 import br.com.acmeairlines.users.dto.UserRegisterDTO;
 import br.com.acmeairlines.users.dto.UserUpdateDTO;
