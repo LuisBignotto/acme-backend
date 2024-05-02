@@ -12,6 +12,12 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: auth-ms
+          uri: lb://auth-ms
+          predicates:
+            - Path=/auth-ms/**
+          filters:
+            - StripPrefix=1
         - id: user-ms
           uri: lb://user-ms
           predicates:
