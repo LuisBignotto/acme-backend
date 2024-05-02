@@ -12,15 +12,21 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: auth-ms
-          uri: lb://auth-ms
-          predicates:
-            - Path=/auth-ms/**
-          filters:
-            - StripPrefix=1
         - id: user-ms
           uri: lb://user-ms
           predicates:
             - Path=/user-ms/**
+          filters:
+            - StripPrefix=1
+        - id: flight-ms
+          uri: lb://flight-ms
+          predicates:
+            - Path=/flight-ms/**
+          filters:
+            - StripPrefix=1
+        - id: baggage-ms
+          uri: lb://baggage-ms
+          predicates:
+            - Path=/baggage-ms/**
           filters:
             - StripPrefix=1

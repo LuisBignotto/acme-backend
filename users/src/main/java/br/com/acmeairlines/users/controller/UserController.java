@@ -45,6 +45,13 @@ public class UserController {
         return ResponseEntity.ok(new TokenDTO(token));
     }
 
+    @GetMapping("/validate")
+    public boolean validateToken(@RequestHeader("Authorization") String token) {
+        token = token.substring(7);
+        String tokenResponse = userService.validateToken(token);
+        return !tokenResponse.equalsIgnoreCase("invalid");
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserModel> getUserById(@PathVariable Long id) {
         Optional<UserModel> user = userService.getUserById(id);
