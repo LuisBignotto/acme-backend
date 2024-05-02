@@ -1,12 +1,16 @@
 package br.com.acmeairlines.users.controller;
 
 import br.com.acmeairlines.users.dto.CreateUserDTO;
+import br.com.acmeairlines.users.dto.LoginDTO;
+import br.com.acmeairlines.users.dto.TokenDTO;
 import br.com.acmeairlines.users.dto.UpdateUserDTO;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -18,10 +22,27 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @PostMapping("/register")
     public ResponseEntity<UserModel> createUser(@RequestBody CreateUserDTO createUserDTO) {
         UserModel user = userService.createUser(createUserDTO);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenDTO> login(@RequestBody LoginDTO data) {
+        var usernamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.password());
+        var auth = this.authenticationManager.authenticate(usernamePassword);
+
+        var token = userService.generateToken((UserModel) auth.getPrincipal());
+
+        if(token == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(new TokenDTO(token));
     }
 
     @GetMapping("/{id}")

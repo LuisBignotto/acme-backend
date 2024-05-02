@@ -6,21 +6,70 @@ import br.com.acmeairlines.users.dto.UpdateUserDTO;
 import br.com.acmeairlines.users.model.AddressModel;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.repository.UserRepository;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Value("${jwt.token}")
+    private String secret;
+
+    public String generateToken(UserModel user) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            return JWT.create()
+                    .withIssuer("acme-auth-api")
+                    .withSubject(user.getEmail())
+                    .withExpiresAt(genExpirationDate())
+                    .sign(algorithm);
+        } catch (JWTCreationException exception) {
+            throw new RuntimeException("Error while generating token", exception);
+        }
+    }
+
+    public String validateToken(String token) {
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(secret);
+            return JWT.require(algorithm)
+                    .withIssuer("acme-auth-api")
+                    .build()
+                    .verify(token)
+                    .getSubject();
+        } catch (JWTVerificationException exception) {
+            return "invalid";
+        }
+    }
+
+    private Instant genExpirationDate() {
+        return LocalDateTime.now().plusHours(24).toInstant(ZoneOffset.of("-03:00"));
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+    }
 
     @Transactional
     public UserModel createUser(CreateUserDTO createUserDTO) {
@@ -73,31 +122,31 @@ public class UserService {
                 user.setAddress(address);
             }
 
-            if(addressDTO.street() != null){
+            if (addressDTO.street() != null) {
                 address.setStreet(addressDTO.street());
             }
 
-            if(addressDTO.neighborhood() != null){
+            if (addressDTO.neighborhood() != null) {
                 address.setNeighborhood(addressDTO.neighborhood());
             }
 
-            if(addressDTO.zipcode() != null){
+            if (addressDTO.zipcode() != null) {
                 address.setZipcode(addressDTO.zipcode());
             }
 
-            if(addressDTO.number() != null){
+            if (addressDTO.number() != null) {
                 address.setNumber(addressDTO.number());
             }
 
-            if(addressDTO.complement() != null){
+            if (addressDTO.complement() != null) {
                 address.setComplement(addressDTO.complement());
             }
 
-            if(addressDTO.city() != null){
+            if (addressDTO.city() != null) {
                 address.setCity(addressDTO.city());
             }
 
-            if(addressDTO.state() != null){
+            if (addressDTO.state() != null) {
                 address.setState(addressDTO.state());
             }
         }
