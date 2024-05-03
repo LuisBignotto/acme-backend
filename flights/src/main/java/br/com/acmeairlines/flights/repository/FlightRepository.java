@@ -8,6 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface FlightRepository extends JpaRepository<FlightModel, Long> {
-    Page<FlightModel> findAll(Pageable pageable);
     Optional<FlightModel> findByTag(String tag);
 }
