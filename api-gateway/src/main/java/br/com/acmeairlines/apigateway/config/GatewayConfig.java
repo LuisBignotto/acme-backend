@@ -1,17 +1,20 @@
 package br.com.acmeairlines.apigateway.config;
 
 import br.com.acmeairlines.apigateway.filter.AuthenticationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.gateway.route.RouteLocator;
-import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Lazy;
 
 @Configuration
 public class GatewayConfig {
 
-    @Autowired
-    private AuthenticationFilter authenticationFilter;
+    private final AuthenticationFilter authenticationFilter;
+
+    public GatewayConfig(@Lazy AuthenticationFilter authenticationFilter) {
+        this.authenticationFilter = authenticationFilter;
+    }
 
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {

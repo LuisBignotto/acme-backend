@@ -1,21 +1,38 @@
 package br.com.acmeairlines.apigateway.service;
 
-import br.com.acmeairlines.apigateway.feignclient.TokenFeignClient;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @Service
 public class UserService {
 
-    private final TokenFeignClient tokenFeignClient;
+    private final WebClient webClient;
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
-    @Autowired
-    public UserService(@Lazy TokenFeignClient tokenFeignClient) {
-        this.tokenFeignClient = tokenFeignClient;
+    public UserService(WebClient.Builder webClientBuilder, ReactorLoadBalancerExchangeFilterFunction lbFunction) {
+        this.webClient = webClientBuilder
+                .baseUrl("http://user-ms")
+                .filter(lbFunction)
+                .build();
     }
 
-    public boolean validateToken(String token) {
-        return tokenFeignClient.validateToken(token);
+    public Mono<Boolean> validateToken(String token) {
+        logger.info("Validando token: {}", token);
+        return webClient.get()
+                .uri("/users/validate")
+                .header("Authorization", token)
+                .retrieve()
+                .bodyToMono(Boolean.class)
+                .doOnNext(isValid -> logger.info("Resultado da validação: {}", isValid))
+                .onErrorResume(e -> {
+                    logger.error("Erro ao validar o token", e);
+                    return Mono.just(false);
+                });
     }
 }

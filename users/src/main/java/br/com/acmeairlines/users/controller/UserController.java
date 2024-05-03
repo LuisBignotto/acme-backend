@@ -47,7 +47,6 @@ public class UserController {
 
     @GetMapping("/validate")
     public boolean validateToken(@RequestHeader("Authorization") String token) {
-        token = token.substring(7);
         String tokenResponse = userService.validateToken(token);
         return !tokenResponse.equalsIgnoreCase("invalid");
     }
