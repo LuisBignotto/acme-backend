@@ -1,6 +1,7 @@
 package br.com.acmeairlines.flights.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,12 +20,24 @@ public class FlightModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotNull
     private String tag;
-    private LocalDateTime departureDate;
-    private LocalDateTime arrivalDate;
-    private String departureAirport;
-    private String arrivalAirport;
-    private String status;
-    private String airplaneModel;
 
+    @NotNull
+    private LocalDateTime departureDate;
+
+    @NotNull
+    private LocalDateTime arrivalDate;
+
+    @NotNull
+    private String departureAirport;
+
+    @NotNull
+    private String arrivalAirport;
+
+    @NotNull
+    private String status;
+
+    @NotNull
+    private String airplaneModel;
 }
