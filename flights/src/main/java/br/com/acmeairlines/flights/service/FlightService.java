@@ -1,11 +1,10 @@
-package br.com.acmeairlines.service;
+package br.com.acmeairlines.flights.service;
 
-import br.com.acmeairlines.dto.FlightCreateDTO;
-import br.com.acmeairlines.dto.FlightDTO;
-import br.com.acmeairlines.dto.FlightUpdateDTO;
-import br.com.acmeairlines.model.FlightModel;
-import br.com.acmeairlines.repository.FlightRepository;
-
+import br.com.acmeairlines.flights.dto.FlightCreateDTO;
+import br.com.acmeairlines.flights.dto.FlightDTO;
+import br.com.acmeairlines.flights.dto.FlightUpdateDTO;
+import br.com.acmeairlines.flights.model.FlightModel;
+import br.com.acmeairlines.flights.repository.FlightRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

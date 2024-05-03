@@ -1,11 +1,10 @@
-package br.com.acmeairlines.controller;
+package br.com.acmeairlines.flights.controller;
 
-import br.com.acmeairlines.dto.FlightCreateDTO;
-import br.com.acmeairlines.dto.FlightDTO;
-import br.com.acmeairlines.dto.FlightUpdateDTO;
-import br.com.acmeairlines.service.FlightService;
+import br.com.acmeairlines.flights.dto.FlightCreateDTO;
+import br.com.acmeairlines.flights.dto.FlightDTO;
+import br.com.acmeairlines.flights.dto.FlightUpdateDTO;
+import br.com.acmeairlines.flights.service.FlightService;
 import jakarta.validation.Valid;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,8 +31,8 @@ public class FlightController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<FlightDTO> getFlightById(@RequestParam Long id) {
+    @GetMapping("/id/{id}")
+    public ResponseEntity<FlightDTO> getFlightById(@PathVariable Long id) {
         return flightService.getFlightById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

@@ -1,11 +1,13 @@
-package br.com.acmeairlines.dto;
+package br.com.acmeairlines.flights.dto;
 
 import java.time.LocalDateTime;
 
-public record FlightSearchDTO(
+public record FlightUpdateDTO(
+    String tag,
     LocalDateTime departureDate,
     LocalDateTime arrivalDate,
     String departureAirport,
     String arrivalAirport,
-    String status
+    String status,
+    String airplaneModel
 ) {}

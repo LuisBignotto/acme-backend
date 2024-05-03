@@ -1,12 +1,14 @@
-package br.com.acmeairlines.dto;
+package br.com.acmeairlines.flights.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDateTime;
 
 public record FlightCreateDTO(
     @NotBlank String tag,
-    @NotBlank LocalDateTime departureDate,
-    @NotBlank LocalDateTime arrivalDate,
+    @NotNull LocalDateTime departureDate,
+    @NotNull LocalDateTime arrivalDate,
     @NotBlank String departureAirport,
     @NotBlank String arrivalAirport,
     @NotBlank String status,

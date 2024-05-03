@@ -1,4 +1,4 @@
-package br.com.acmeairlines.dto;
+package br.com.acmeairlines.flights.dto;
 
 import java.time.LocalDateTime;
 
