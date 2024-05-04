@@ -106,21 +106,17 @@ public class BaggageService {
         baggageModel.setLastLocation(baggageDTO.lastLocation());
         baggageModel.setFlightId(baggageDTO.flightId());
 
-        List<BaggageTrackerModel> trackers = baggageDTO.trackers().stream()
-                .map(trackerDTO -> {
-                    BaggageTrackerModel trackerModel = new BaggageTrackerModel();
-                    trackerModel.setBaggage(baggageModel);
-                    trackerModel.setTrackerUserId(trackerDTO.trackerUserId());
-                    return trackerModel;
-                })
-                .collect(Collectors.toList());
-
-        baggageModel.setTrackers(trackers);
+        baggageModel.getTrackers().clear();
+        baggageDTO.trackers().forEach(trackerDTO -> {
+            BaggageTrackerModel trackerModel = new BaggageTrackerModel();
+            trackerModel.setBaggage(baggageModel);
+            trackerModel.setTrackerUserId(trackerDTO.trackerUserId());
+            baggageModel.getTrackers().add(trackerModel);
+        });
 
         BaggageModel updatedBaggage = baggageRepository.save(baggageModel);
         return convertToDTO(updatedBaggage);
     }
-
 
     private BaggageDTO convertToDTO(BaggageModel baggageModel) {
         StatusDTO statusDTO = new StatusDTO(baggageModel.getStatus().getId(), baggageModel.getStatus().getStatus());
