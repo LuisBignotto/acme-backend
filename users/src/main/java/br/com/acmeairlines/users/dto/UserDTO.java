@@ -8,6 +8,6 @@ public record UserDTO(
         String cpf,
         String name,
         String phone,
-        List<AddressDTO> addresses,
+        AddressDTO address,
         List<String> roles
 ) {}

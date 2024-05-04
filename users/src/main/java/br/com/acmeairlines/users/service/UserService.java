@@ -3,7 +3,9 @@ package br.com.acmeairlines.users.service;
 import br.com.acmeairlines.users.dto.AddressDTO;
 import br.com.acmeairlines.users.dto.CreateUserDTO;
 import br.com.acmeairlines.users.dto.UpdateUserDTO;
+import br.com.acmeairlines.users.dto.UserDTO;
 import br.com.acmeairlines.users.model.AddressModel;
+import br.com.acmeairlines.users.model.RoleModel;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.repository.UserRepository;
 import com.auth0.jwt.JWT;
@@ -22,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -72,32 +76,39 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserModel createUser(CreateUserDTO createUserDTO) {
+    public UserDTO createUser(CreateUserDTO createUserDTO) {
         UserModel user = new UserModel();
         user.setEmail(createUserDTO.email());
         user.setCpf(createUserDTO.cpf());
         user.setName(createUserDTO.name());
         user.setPassword(passwordEncoder.encode(createUserDTO.password()));
-        return userRepository.save(user);
+        UserModel savedUser = userRepository.save(user);
+        return convertToDTO(savedUser);
     }
 
     @Transactional(readOnly = true)
-    public Optional<UserModel> getUserByEmail(String email) {
-        return userRepository.findByEmail(email);
+    public UserDTO getUserByEmail(String email) {
+        UserModel user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        return convertToDTO(user);
     }
 
     @Transactional(readOnly = true)
-    public Optional<UserModel> getUserById(Long id) {
-        return userRepository.findById(id);
+    public UserDTO getUserById(Long id) {
+        UserModel user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        return convertToDTO(user);
     }
 
     @Transactional(readOnly = true)
-    public Optional<UserModel> getUserByCpf(String cpf) {
-        return userRepository.findByCpf(cpf);
+    public UserDTO getUserByCpf(String cpf) {
+        UserModel user = userRepository.findByCpf(cpf)
+                .orElseThrow(() -> new RuntimeException("User not found with cpf: " + cpf));
+        return convertToDTO(user);
     }
 
     @Transactional
-    public UserModel updateUser(Long id, UpdateUserDTO updateUserDTO) {
+    public UserDTO updateUser(Long id, UpdateUserDTO updateUserDTO) {
         UserModel user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
         if (updateUserDTO.email() != null) {
@@ -151,13 +162,45 @@ public class UserService implements UserDetailsService {
             }
         }
 
-        return userRepository.save(user);
+        UserModel updatedUser = userRepository.save(user);
+        return convertToDTO(updatedUser);
     }
-
 
     @Transactional
     public void deleteUser(Long id) {
         UserModel user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         userRepository.delete(user);
     }
+
+    private UserDTO convertToDTO(UserModel user) {
+        AddressDTO addressDTO = null;
+        if (user.getAddress() != null) {
+            AddressModel address = user.getAddress();
+            addressDTO = new AddressDTO(
+                    address.getId(),
+                    address.getStreet(),
+                    address.getNeighborhood(),
+                    address.getZipcode(),
+                    address.getNumber(),
+                    address.getComplement(),
+                    address.getCity(),
+                    address.getState()
+            );
+        }
+
+        List<String> roles = user.getRoles().stream()
+                .map(RoleModel::getRoleName)
+                .collect(Collectors.toList());
+
+        return new UserDTO(
+                user.getId(),
+                user.getEmail(),
+                user.getCpf(),
+                user.getName(),
+                user.getPhone(),
+                addressDTO,
+                roles
+        );
+    }
+
 }
