@@ -4,6 +4,7 @@ import br.com.acmeairlines.users.dto.CreateUserDTO;
 import br.com.acmeairlines.users.dto.LoginDTO;
 import br.com.acmeairlines.users.dto.TokenDTO;
 import br.com.acmeairlines.users.dto.UpdateUserDTO;
+import br.com.acmeairlines.users.dto.UserDTO;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -26,8 +25,8 @@ public class UserController {
     private AuthenticationManager authenticationManager;
 
     @PostMapping("/register")
-    public ResponseEntity<UserModel> createUser(@RequestBody CreateUserDTO createUserDTO) {
-        UserModel user = userService.createUser(createUserDTO);
+    public ResponseEntity<UserDTO> createUser(@RequestBody CreateUserDTO createUserDTO) {
+        UserDTO user = userService.createUser(createUserDTO);
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 
@@ -52,29 +51,26 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserModel> getUserById(@PathVariable Long id) {
-        Optional<UserModel> user = userService.getUserById(id);
-        return user.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+        UserDTO user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<UserModel> getUserByEmail(@RequestParam String email) {
-        Optional<UserModel> user = userService.getUserByEmail(email);
-        return user.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<UserDTO> getUserByEmail(@RequestParam String email) {
+        UserDTO user = userService.getUserByEmail(email);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/cpf/{cpf}")
-    public ResponseEntity<UserModel> getUserByCpf(@PathVariable String cpf) {
-        Optional<UserModel> user = userService.getUserByCpf(cpf);
-        return user.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<UserDTO> getUserByCpf(@PathVariable String cpf) {
+        UserDTO user = userService.getUserByCpf(cpf);
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserModel> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO updateUserDTO) {
-        UserModel updatedUser = userService.updateUser(id, updateUserDTO);
+    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UpdateUserDTO updateUserDTO) {
+        UserDTO updatedUser = userService.updateUser(id, updateUserDTO);
         return ResponseEntity.ok(updatedUser);
     }
 
