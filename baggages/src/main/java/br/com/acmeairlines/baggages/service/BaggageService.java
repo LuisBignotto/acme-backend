@@ -77,6 +77,51 @@ public class BaggageService {
         return baggageModel != null ? convertToDTO(baggageModel) : null;
     }
 
+    @Transactional(readOnly = true)
+    public List<BaggageDTO> getBaggagesByTrackerUserId(Long trackerUserId) {
+        List<BaggageModel> baggageModels = baggageRepository.findByTrackersTrackerUserId(trackerUserId);
+        return baggageModels.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteBaggage(Long baggageId) {
+        baggageRepository.deleteById(baggageId);
+    }
+
+    @Transactional
+    public BaggageDTO updateBaggage(Long baggageId, BaggageDTO baggageDTO) {
+        BaggageModel baggageModel = baggageRepository.findById(baggageId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid baggage ID"));
+
+        StatusModel status = statusRepository.findById(baggageDTO.status().id())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid status ID"));
+
+        baggageModel.setUserId(baggageDTO.userId());
+        baggageModel.setTag(baggageDTO.tag());
+        baggageModel.setColor(baggageDTO.color());
+        baggageModel.setWeight(baggageDTO.weight());
+        baggageModel.setStatus(status);
+        baggageModel.setLastLocation(baggageDTO.lastLocation());
+        baggageModel.setFlightId(baggageDTO.flightId());
+
+        List<BaggageTrackerModel> trackers = baggageDTO.trackers().stream()
+                .map(trackerDTO -> {
+                    BaggageTrackerModel trackerModel = new BaggageTrackerModel();
+                    trackerModel.setBaggage(baggageModel);
+                    trackerModel.setTrackerUserId(trackerDTO.trackerUserId());
+                    return trackerModel;
+                })
+                .collect(Collectors.toList());
+
+        baggageModel.setTrackers(trackers);
+
+        BaggageModel updatedBaggage = baggageRepository.save(baggageModel);
+        return convertToDTO(updatedBaggage);
+    }
+
+
     private BaggageDTO convertToDTO(BaggageModel baggageModel) {
         StatusDTO statusDTO = new StatusDTO(baggageModel.getStatus().getId(), baggageModel.getStatus().getStatus());
 

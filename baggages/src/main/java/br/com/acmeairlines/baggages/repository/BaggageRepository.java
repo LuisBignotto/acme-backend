@@ -11,4 +11,7 @@ public interface BaggageRepository extends JpaRepository<BaggageModel, Long> {
     List<BaggageModel> findByFlightId(Long id);
 
     BaggageModel findByTag(String tag);
+
+    List<BaggageModel> findByTrackersTrackerUserId(Long trackerUserId);
+
 }
