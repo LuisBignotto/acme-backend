@@ -5,6 +5,7 @@ import br.com.acmeairlines.users.feignclient.BaggageFeignClient;
 import br.com.acmeairlines.users.model.AddressModel;
 import br.com.acmeairlines.users.model.RoleModel;
 import br.com.acmeairlines.users.model.UserModel;
+import br.com.acmeairlines.users.repository.RoleRepository;
 import br.com.acmeairlines.users.repository.UserRepository;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -32,6 +33,9 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -84,9 +88,20 @@ public class UserService implements UserDetailsService {
         user.setCpf(createUserDTO.cpf());
         user.setName(createUserDTO.name());
         user.setPassword(passwordEncoder.encode(createUserDTO.password()));
+
+        RoleModel defaultRole = roleRepository.findByRoleName("ROLE_USER")
+                .orElseGet(() -> {
+                    RoleModel newRole = new RoleModel();
+                    newRole.setRoleName("ROLE_USER");
+                    return roleRepository.save(newRole);
+                });
+
+        user.getRoles().add(defaultRole);
+
         UserModel savedUser = userRepository.save(user);
         return convertToDTO(savedUser);
     }
+
 
     @Transactional(readOnly = true)
     public UserDTO getUserByEmail(String email) {
@@ -201,6 +216,19 @@ public class UserService implements UserDetailsService {
                 userDTO.roles(),
                 baggages
         );
+    }
+
+    @Transactional
+    public UserDTO addRoleToUser(Long userId, String roleName) {
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        RoleModel role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found with name: " + roleName));
+
+        user.getRoles().add(role);
+        UserModel updatedUser = userRepository.save(user);
+        return convertToDTO(updatedUser);
     }
 
     private UserDTO convertToDTO(UserModel user) {

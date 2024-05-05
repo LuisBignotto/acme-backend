@@ -54,6 +54,12 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PostMapping("/{userId}/roles/{roleName}")
+    public ResponseEntity<UserDTO> addRoleToUser(@PathVariable Long userId, @PathVariable String roleName) {
+        UserDTO updatedUser = userService.addRoleToUser(userId, roleName);
+        return ResponseEntity.ok(updatedUser);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         UserDTO user = userService.getUserById(id);
