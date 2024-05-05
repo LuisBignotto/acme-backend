@@ -1,12 +1,9 @@
 package br.com.acmeairlines.users.controller;
 
-import br.com.acmeairlines.users.dto.CreateUserDTO;
-import br.com.acmeairlines.users.dto.LoginDTO;
-import br.com.acmeairlines.users.dto.TokenDTO;
-import br.com.acmeairlines.users.dto.UpdateUserDTO;
-import br.com.acmeairlines.users.dto.UserDTO;
+import br.com.acmeairlines.users.dto.*;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,6 +45,13 @@ public class UserController {
     public boolean validateToken(@RequestHeader("Authorization") String token) {
         String tokenResponse = userService.validateToken(token);
         return !tokenResponse.equalsIgnoreCase("invalid");
+    }
+
+    @GetMapping()
+    public ResponseEntity<UserResponseDTO> getCompleteUserInfo(HttpServletRequest request) {
+        String email = request.getRemoteUser();
+        UserResponseDTO user = userService.getCompleteUserInfoByEmail(email);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/{id}")

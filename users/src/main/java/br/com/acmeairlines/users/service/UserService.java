@@ -1,9 +1,7 @@
 package br.com.acmeairlines.users.service;
 
-import br.com.acmeairlines.users.dto.AddressDTO;
-import br.com.acmeairlines.users.dto.CreateUserDTO;
-import br.com.acmeairlines.users.dto.UpdateUserDTO;
-import br.com.acmeairlines.users.dto.UserDTO;
+import br.com.acmeairlines.users.dto.*;
+import br.com.acmeairlines.users.feignclient.BaggageFeignClient;
 import br.com.acmeairlines.users.model.AddressModel;
 import br.com.acmeairlines.users.model.RoleModel;
 import br.com.acmeairlines.users.model.UserModel;
@@ -14,6 +12,7 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -36,6 +35,9 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private BaggageFeignClient baggageFeignClient;
 
     @Value("${jwt.token}")
     private String secret;
@@ -170,6 +172,35 @@ public class UserService implements UserDetailsService {
     public void deleteUser(Long id) {
         UserModel user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         userRepository.delete(user);
+    }
+
+    public UserResponseDTO getCompleteUserInfoByEmail(String email) {
+        Long userId = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email))
+                .getId();
+        return getCompleteUserInfo(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponseDTO getCompleteUserInfo(Long userId) {
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        UserDTO userDTO = convertToDTO(user);
+
+        ResponseEntity<List<BaggageDTO>> baggageResponse = baggageFeignClient.getBaggagesByUserId(userId);
+        List<BaggageDTO> baggages = baggageResponse.getBody();
+
+        return new UserResponseDTO(
+                userDTO.id(),
+                userDTO.email(),
+                userDTO.cpf(),
+                userDTO.name(),
+                userDTO.phone(),
+                userDTO.address(),
+                userDTO.roles(),
+                baggages
+        );
     }
 
     private UserDTO convertToDTO(UserModel user) {
