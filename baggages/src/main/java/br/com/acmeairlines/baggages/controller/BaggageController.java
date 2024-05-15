@@ -5,6 +5,8 @@ import br.com.acmeairlines.baggages.dto.CreateBaggageDTO;
 import br.com.acmeairlines.baggages.service.BaggageService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,12 @@ public class BaggageController {
     public ResponseEntity<BaggageDTO> createBaggage(@Valid @RequestBody CreateBaggageDTO createBaggageDTO) {
         BaggageDTO createdBaggage = baggageService.createBaggage(createBaggageDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBaggage);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<BaggageDTO>> findAllFlights(Pageable pageable) {
+        Page<BaggageDTO> BaggageDTOs = baggageService.findAllBaggages(pageable);
+        return ResponseEntity.ok(BaggageDTOs);
     }
 
     @GetMapping("/user/{userId}")

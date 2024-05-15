@@ -9,6 +9,8 @@ import br.com.acmeairlines.baggages.model.BaggageTrackerModel;
 import br.com.acmeairlines.baggages.model.StatusModel;
 import br.com.acmeairlines.baggages.repository.BaggageRepository;
 import br.com.acmeairlines.baggages.repository.StatusRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,10 @@ public class BaggageService {
     public BaggageService(BaggageRepository baggageRepository, StatusRepository statusRepository) {
         this.baggageRepository = baggageRepository;
         this.statusRepository = statusRepository;
+    }
+
+    public Page<BaggageDTO> findAllBaggages(Pageable pageable) {
+        return baggageRepository.findAll(pageable).map(this::convertToDTO);
     }
 
     @Transactional
@@ -95,24 +101,39 @@ public class BaggageService {
         BaggageModel baggageModel = baggageRepository.findById(baggageId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid baggage ID"));
 
-        StatusModel status = statusRepository.findById(baggageDTO.status().id())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid status ID"));
+        if (baggageDTO.userId() != null) {
+            baggageModel.setUserId(baggageDTO.userId());
+        }
+        if (baggageDTO.tag() != null) {
+            baggageModel.setTag(baggageDTO.tag());
+        }
+        if (baggageDTO.color() != null) {
+            baggageModel.setColor(baggageDTO.color());
+        }
+        if (baggageDTO.weight() != null) {
+            baggageModel.setWeight(baggageDTO.weight());
+        }
+        if (baggageDTO.status() != null && baggageDTO.status().id() != null) {
+            StatusModel status = statusRepository.findById(baggageDTO.status().id())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid status ID"));
+            baggageModel.setStatus(status);
+        }
+        if (baggageDTO.lastLocation() != null) {
+            baggageModel.setLastLocation(baggageDTO.lastLocation());
+        }
+        if (baggageDTO.flightId() != null) {
+            baggageModel.setFlightId(baggageDTO.flightId());
+        }
 
-        baggageModel.setUserId(baggageDTO.userId());
-        baggageModel.setTag(baggageDTO.tag());
-        baggageModel.setColor(baggageDTO.color());
-        baggageModel.setWeight(baggageDTO.weight());
-        baggageModel.setStatus(status);
-        baggageModel.setLastLocation(baggageDTO.lastLocation());
-        baggageModel.setFlightId(baggageDTO.flightId());
-
-        baggageModel.getTrackers().clear();
-        baggageDTO.trackers().forEach(trackerDTO -> {
-            BaggageTrackerModel trackerModel = new BaggageTrackerModel();
-            trackerModel.setBaggage(baggageModel);
-            trackerModel.setTrackerUserId(trackerDTO.trackerUserId());
-            baggageModel.getTrackers().add(trackerModel);
-        });
+        if (baggageDTO.trackers() != null) {
+            baggageModel.getTrackers().clear();
+            baggageDTO.trackers().forEach(trackerDTO -> {
+                BaggageTrackerModel trackerModel = new BaggageTrackerModel();
+                trackerModel.setBaggage(baggageModel);
+                trackerModel.setTrackerUserId(trackerDTO.trackerUserId());
+                baggageModel.getTrackers().add(trackerModel);
+            });
+        }
 
         BaggageModel updatedBaggage = baggageRepository.save(baggageModel);
         return convertToDTO(updatedBaggage);
