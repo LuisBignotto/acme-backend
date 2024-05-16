@@ -1,0 +1,24 @@
+# Usar imagem do maven para build
+FROM maven:3.8.6-eclipse-temurin-17 AS build
+WORKDIR /app
+
+# Copia os arquivos do projeto
+COPY pom.xml .
+COPY src ./src
+
+# Executa o Maven para construir o projeto
+RUN mvn clean package -DskipTests
+
+# Usa uma imagem base oficial do OpenJDK para execução
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+
+# Copia o JAR da build anterior
+COPY --from=build /app/target/api-server-1.jar app.jar
+
+# Expõe a porta que a aplicação usará
+EXPOSE 8888
+
+# Comando para iniciar a aplicação
+ENTRYPOINT ["java", "-jar", "app.jar"]
+

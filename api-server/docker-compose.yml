@@ -1,0 +1,12 @@
+version: '3'
+services:
+  eureka-server:
+    image: luisbignotto/eureka-server:1.0
+    ports:
+      - "8888:8888"
+    networks:
+      - eureka-network
+
+networks:
+  eureka-network:
+    driver: bridge
