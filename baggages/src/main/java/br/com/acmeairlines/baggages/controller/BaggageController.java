@@ -10,7 +10,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import br.com.acmeairlines.baggages.helper.LabelGeneratorService;
+import com.google.zxing.WriterException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -19,6 +27,9 @@ public class BaggageController {
 
     @Autowired
     private BaggageService baggageService;
+
+    @Autowired
+    private LabelGeneratorService labelGeneratorService;
 
     @PostMapping
     public ResponseEntity<BaggageDTO> createBaggage(@Valid @RequestBody CreateBaggageDTO createBaggageDTO) {
@@ -70,6 +81,24 @@ public class BaggageController {
     public ResponseEntity<BaggageDTO> updateBaggage(@PathVariable Long baggageId, @Valid @RequestBody BaggageDTO baggageDTO) {
         BaggageDTO updatedBaggage = baggageService.updateBaggage(baggageId, baggageDTO);
         return ResponseEntity.ok(updatedBaggage);
+    }
+
+    @GetMapping("/generate")
+    public ResponseEntity<byte[]> generateLabel(@RequestParam Long id,
+                                                @RequestParam Long userId,
+                                                @RequestParam String tag,
+                                                @RequestParam String color,
+                                                @RequestParam BigDecimal weight,
+                                                @RequestParam Long flightId) {
+        try {
+            byte[] pdfBytes = labelGeneratorService.generateLabel(id, userId, tag, color, weight, flightId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Disposition", "attachment; filename=label.pdf");
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (WriterException | IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }
