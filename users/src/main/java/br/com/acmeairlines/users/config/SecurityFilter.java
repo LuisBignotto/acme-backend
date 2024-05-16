@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
@@ -29,19 +30,20 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         if (token != null) {
             UserService userService = applicationContext.getBean(UserService.class);
-            String login = userService.validateToken(token);
-            if (login.equalsIgnoreCase("invalid")) {
+            Map<String, String> tokenDetails = userService.validateToken(token);
+
+            if (tokenDetails.containsKey("error")) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido");
                 return;
             }
 
+            String email = tokenDetails.get("email");
             UserRepository userRepository = applicationContext.getBean(UserRepository.class);
-            UserDetails user = userRepository.findByEmail(login).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + login));
+            UserDetails user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
             var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
         filterChain.doFilter(request, response);
     }
 

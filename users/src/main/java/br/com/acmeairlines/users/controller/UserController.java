@@ -5,11 +5,15 @@ import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -43,13 +47,26 @@ public class UserController {
 
     @GetMapping("/validate")
     public boolean validateToken(@RequestHeader("Authorization") String token) {
-        String tokenResponse = userService.validateToken(token);
-        return !tokenResponse.equalsIgnoreCase("invalid");
+        Map<String, String> tokenResponse = userService.validateToken(token);
+        return !tokenResponse.containsKey("error");
     }
 
-    @GetMapping()
-    public ResponseEntity<UserResponseDTO> getCompleteUserInfo(HttpServletRequest request) {
-        String email = request.getRemoteUser();
+    @GetMapping
+    public ResponseEntity<Page<UserDTO>> findAllFlights(Pageable pageable) {
+        Page<UserDTO> UserDTOs = userService.findAllUsers(pageable);
+        return ResponseEntity.ok(UserDTOs);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCompleteUserInfo(@RequestHeader("Authorization") String token) {
+        String tokenWithoutBearer = token.substring(7);
+        Map<String, String> tokenResponse = userService.validateToken(tokenWithoutBearer);
+
+        if (tokenResponse.containsKey("error")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String email = tokenResponse.get("email");
         UserResponseDTO user = userService.getCompleteUserInfoByEmail(email);
         return ResponseEntity.ok(user);
     }
@@ -57,6 +74,12 @@ public class UserController {
     @PostMapping("/{userId}/roles/{roleName}")
     public ResponseEntity<UserDTO> addRoleToUser(@PathVariable Long userId, @PathVariable String roleName) {
         UserDTO updatedUser = userService.addRoleToUser(userId, roleName);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/{userId}/roles/{roleName}")
+    public ResponseEntity<UserDTO> removeRoleFromUser(@PathVariable Long userId, @PathVariable String roleName) {
+        UserDTO updatedUser = userService.removeRoleFromUser(userId, roleName);
         return ResponseEntity.ok(updatedUser);
     }
 

@@ -11,8 +11,11 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,8 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,7 +53,8 @@ public class UserService implements UserDetailsService {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("acme-auth-api")
-                    .withSubject(user.getEmail())
+                    .withSubject(String.valueOf(user.getId()))
+                    .withClaim("email", user.getEmail())
                     .withExpiresAt(genExpirationDate())
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
@@ -59,16 +62,20 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public String validateToken(String token) {
+    public Map<String, String> validateToken(String token) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
-            return JWT.require(algorithm)
+            DecodedJWT decodedJWT = JWT.require(algorithm)
                     .withIssuer("acme-auth-api")
                     .build()
-                    .verify(token)
-                    .getSubject();
+                    .verify(token);
+
+            Map<String, String> tokenDetails = new HashMap<>();
+            tokenDetails.put("subject", decodedJWT.getSubject());
+            tokenDetails.put("email", decodedJWT.getClaim("email").asString());
+            return tokenDetails;
         } catch (JWTVerificationException exception) {
-            return "invalid";
+            return Collections.singletonMap("error", "invalid");
         }
     }
 
@@ -83,6 +90,21 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public UserDTO createUser(CreateUserDTO createUserDTO) {
+
+        UserModel check_email = userRepository.findByEmail(createUserDTO.email())
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + createUserDTO.email()));
+
+        if(check_email != null){
+            throw new IllegalArgumentException("Email already in use.");
+        }
+
+        UserModel check_cpf = userRepository.findByEmail(createUserDTO.cpf())
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + createUserDTO.cpf()));
+
+        if(check_cpf != null){
+            throw new IllegalArgumentException("CPF already in use.");
+        }
+
         UserModel user = new UserModel();
         user.setEmail(createUserDTO.email());
         user.setCpf(createUserDTO.cpf());
@@ -102,6 +124,9 @@ public class UserService implements UserDetailsService {
         return convertToDTO(savedUser);
     }
 
+    public Page<UserDTO> findAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(this::convertToDTO);
+    }
 
     @Transactional(readOnly = true)
     public UserDTO getUserByEmail(String email) {
@@ -127,6 +152,10 @@ public class UserService implements UserDetailsService {
     @Transactional
     public UserDTO updateUser(Long id, UpdateUserDTO updateUserDTO) {
         UserModel user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        if (updateUserDTO.name() != null) {
+            user.setName(updateUserDTO.name());
+        }
 
         if (updateUserDTO.email() != null) {
             user.setEmail(updateUserDTO.email());
@@ -227,6 +256,19 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new RuntimeException("Role not found with name: " + roleName));
 
         user.getRoles().add(role);
+        UserModel updatedUser = userRepository.save(user);
+        return convertToDTO(updatedUser);
+    }
+
+    @Transactional
+    public UserDTO removeRoleFromUser(Long userId, String roleName) {
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        RoleModel role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role not found with name: " + roleName));
+
+        user.getRoles().remove(role);
         UserModel updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
