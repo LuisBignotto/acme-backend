@@ -12,5 +12,4 @@ public class UserDTO {
     private String cpf;
     private String name;
     private String phone;
-
 }
