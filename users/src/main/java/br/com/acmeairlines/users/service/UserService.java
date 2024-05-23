@@ -12,6 +12,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -89,19 +90,17 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserDTO createUser(CreateUserDTO createUserDTO) {
+    public UserDTO createUser(@Valid CreateUserDTO createUserDTO) {
 
-        UserModel check_email = userRepository.findByEmail(createUserDTO.email())
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + createUserDTO.email()));
+        Optional<UserModel> check_email = userRepository.findByEmail(createUserDTO.email());
 
-        if(check_email != null){
+        if(check_email.isPresent()){
             throw new IllegalArgumentException("Email already in use.");
         }
 
-        UserModel check_cpf = userRepository.findByEmail(createUserDTO.cpf())
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + createUserDTO.cpf()));
+        Optional<UserModel> check_cpf = userRepository.findByEmail(createUserDTO.cpf());
 
-        if(check_cpf != null){
+        if(check_cpf.isPresent()){
             throw new IllegalArgumentException("CPF already in use.");
         }
 

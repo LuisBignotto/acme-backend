@@ -2,8 +2,6 @@ package br.com.acmeairlines.baggages.exception;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -26,64 +24,61 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class ErrorHandlingController {
 
-    private static final Logger logger = LoggerFactory.getLogger(ErrorHandlingController.class);
-
     @Autowired
     private MessageSource messageSource;
 
-    private void logError(Exception ex) {
-        logger.error("Exception: {}", ex.getMessage(), ex);
-    }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFound(EntityNotFoundException ex, HttpServletRequest request) {
-        logError(ex);
         return buildResponseEntity(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException ex, HttpServletRequest request) {
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, HttpServletRequest request) {
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
-        logError(ex);
-        return buildResponseEntity(HttpStatus.CONFLICT, "Data integrity violation: " + ex.getMostSpecificCause().getMessage(), request);
+        return buildResponseEntity(HttpStatus.CONFLICT, "Data integrity violation.", request);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex, HttpServletRequest request) {
-        logError(ex);
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
         return buildResponseEntity(HttpStatus.BAD_REQUEST, "Malformed JSON request.", request);
     }
 
     @ExceptionHandler(TransactionTimedOutException.class)
-    public ResponseEntity<ErrorResponse> handleTransactionTimedOutException(TransactionTimedOutException ex, HttpServletRequest request) {
-        logError(ex);
+    public ResponseEntity<ErrorResponse> handleTransactionTimedOut(TransactionTimedOutException ex, HttpServletRequest request) {
         return buildResponseEntity(HttpStatus.REQUEST_TIMEOUT, "Transaction timed out.", request);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
-        logError(ex);
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
         return buildResponseEntity(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Media type not supported.", request);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
-        logError(ex);
+    public ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
         return buildResponseEntity(HttpStatus.METHOD_NOT_ALLOWED, "HTTP method not supported.", request);
     }
 
     @ExceptionHandler(ServiceUnavailableException.class)
-    public ResponseEntity<ErrorResponse> handleServiceUnavailableException(ServiceUnavailableException ex, HttpServletRequest request) {
-        logError(ex);
-        return buildResponseEntity(HttpStatus.SERVICE_UNAVAILABLE, "Service unavailable: " + ex.getMessage(), request);
+    public ResponseEntity<ErrorResponse> handleServiceUnavailable(ServiceUnavailableException ex, HttpServletRequest request) {
+        return buildResponseEntity(HttpStatus.SERVICE_UNAVAILABLE, "Service unavailable.", request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<String> errors = ex.getBindingResult().getAllErrors().stream()
                 .map(error -> (error instanceof FieldError) ? ((FieldError) error).getField() + ": " + error.getDefaultMessage() : error.getDefaultMessage())
                 .collect(Collectors.toList());
         String errorMessage = String.join(", ", errors);
-        logError(ex);
         return buildResponseEntity(HttpStatus.BAD_REQUEST, errorMessage, request);
     }
 
