@@ -52,6 +52,11 @@ public class UserController {
         return !tokenResponse.containsKey("error");
     }
 
+    @GetMapping("/check")
+    public Map<String, String> checkToken(@RequestHeader("Authorization") String token) {
+        return userService.validateToken(token);
+    }
+
     @GetMapping
     public ResponseEntity<Page<UserDTO>> findAllFlights(Pageable pageable) {
         Page<UserDTO> UserDTOs = userService.findAllUsers(pageable);

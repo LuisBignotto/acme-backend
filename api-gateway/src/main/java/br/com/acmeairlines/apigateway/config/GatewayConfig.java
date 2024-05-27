@@ -31,6 +31,9 @@ public class GatewayConfig {
                 .route("baggage-ms", r -> r.path("/baggage-ms/**")
                         .filters(f -> f.filter(corsResponseFilter).filter(authenticationFilter).stripPrefix(1))
                         .uri("lb://baggage-ms"))
+                .route("ticket-ms", r -> r.path("/ticket-ms/**")
+                        .filters(f -> f.filter(corsResponseFilter).filter(authenticationFilter).stripPrefix(1))
+                        .uri("lb://ticket-ms"))
                 .build();
     }
 }

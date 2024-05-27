@@ -30,3 +30,9 @@ spring:
             - Path=/baggage-ms/**
           filters:
             - StripPrefix=1
+        - id: ticket-ms
+          uri: lb://ticket-ms
+          predicates:
+            - Path=/ticket-ms/**
+          filters:
+            - StripPrefix=1
