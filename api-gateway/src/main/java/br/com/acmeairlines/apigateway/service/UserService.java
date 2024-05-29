@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 public class UserService {
 
     private final WebClient webClient;
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     public UserService(WebClient.Builder webClientBuilder, ReactorLoadBalancerExchangeFilterFunction lbFunction) {
         this.webClient = webClientBuilder
@@ -23,16 +22,11 @@ public class UserService {
     }
 
     public Mono<Boolean> validateToken(String token) {
-        logger.info("Validando token: {}", token);
         return webClient.get()
                 .uri("/users/validate")
                 .header("Authorization", token)
                 .retrieve()
                 .bodyToMono(Boolean.class)
-                .doOnNext(isValid -> logger.info("Resultado da validação: {}", isValid))
-                .onErrorResume(e -> {
-                    logger.error("Erro ao validar o token", e);
-                    return Mono.just(false);
-                });
+                .onErrorResume(e -> Mono.just(false));
     }
 }
