@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -17,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
@@ -30,18 +32,22 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         if (token != null) {
             UserService userService = applicationContext.getBean(UserService.class);
-            Map<String, String> tokenDetails = userService.validateToken(token);
+            Map<String, Object> tokenDetails = userService.validateToken(token);
 
             if (tokenDetails.containsKey("error")) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido");
                 return;
             }
 
-            String email = tokenDetails.get("email");
+            Long userId = Long.valueOf((String) tokenDetails.get("id"));
             UserRepository userRepository = applicationContext.getBean(UserRepository.class);
-            UserDetails user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+            UserDetails user = userRepository.findById(userId).orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
 
-            var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+            var authorities = user.getAuthorities().stream()
+                    .map(role -> new SimpleGrantedAuthority(role.getAuthority()))
+                    .collect(Collectors.toList());
+
+            var authentication = new UsernamePasswordAuthenticationToken(user, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);

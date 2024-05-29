@@ -3,7 +3,6 @@ package br.com.acmeairlines.users.controller;
 import br.com.acmeairlines.users.dto.*;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,17 +47,17 @@ public class UserController {
 
     @GetMapping("/validate")
     public boolean validateToken(@RequestHeader("Authorization") String token) {
-        Map<String, String> tokenResponse = userService.validateToken(token);
+        Map<String, Object> tokenResponse = userService.validateToken(token);
         return !tokenResponse.containsKey("error");
     }
 
     @GetMapping("/check")
-    public Map<String, String> checkToken(@RequestHeader("Authorization") String token) {
+    public Map<String, Object> checkToken(@RequestHeader("Authorization") String token) {
         return userService.validateToken(token);
     }
 
     @GetMapping
-    public ResponseEntity<Page<UserDTO>> findAllFlights(Pageable pageable) {
+    public ResponseEntity<Page<UserDTO>> findAllUsers(Pageable pageable) {
         Page<UserDTO> UserDTOs = userService.findAllUsers(pageable);
         return ResponseEntity.ok(UserDTOs);
     }
@@ -66,14 +65,14 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getCompleteUserInfo(@RequestHeader("Authorization") String token) {
         String tokenWithoutBearer = token.substring(7);
-        Map<String, String> tokenResponse = userService.validateToken(tokenWithoutBearer);
+        Map<String, Object> tokenResponse = userService.validateToken(tokenWithoutBearer);
 
         if (tokenResponse.containsKey("error")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        String email = tokenResponse.get("email");
-        UserResponseDTO user = userService.getCompleteUserInfoByEmail(email);
+        Long userId = Long.valueOf((String) tokenResponse.get("id"));
+        UserResponseDTO user = userService.getCompleteUserInfo(userId);
         return ResponseEntity.ok(user);
     }
 

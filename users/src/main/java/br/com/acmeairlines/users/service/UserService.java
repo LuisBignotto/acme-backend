@@ -55,7 +55,9 @@ public class UserService implements UserDetailsService {
             return JWT.create()
                     .withIssuer("acme-auth-api")
                     .withSubject(String.valueOf(user.getId()))
-                    .withClaim("email", user.getEmail())
+                    .withClaim("roles", user.getRoles().stream()
+                            .map(RoleModel::getRoleName)
+                            .collect(Collectors.toList()))
                     .withExpiresAt(genExpirationDate())
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
@@ -63,17 +65,16 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public Map<String, String> validateToken(String token) {
+    public Map<String, Object> validateToken(String token) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             DecodedJWT decodedJWT = JWT.require(algorithm)
                     .withIssuer("acme-auth-api")
                     .build()
                     .verify(token);
-
-            Map<String, String> tokenDetails = new HashMap<>();
-            tokenDetails.put("subject", decodedJWT.getSubject());
-            tokenDetails.put("email", decodedJWT.getClaim("email").asString());
+            Map<String, Object> tokenDetails = new HashMap<>();
+            tokenDetails.put("id", decodedJWT.getSubject());
+            tokenDetails.put("roles", decodedJWT.getClaim("roles").asList(String.class));
             return tokenDetails;
         } catch (JWTVerificationException exception) {
             return Collections.singletonMap("error", "invalid");
