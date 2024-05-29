@@ -14,9 +14,9 @@ public interface UserClient {
     @GetMapping("/users/{id}")
     UserDTO getUserById(@PathVariable("id") Long id);
 
-    @GetMapping("/users")
+    @GetMapping("/search")
     UserDTO getUserByEmail(@RequestParam("email") String email);
 
     @GetMapping("/users/check")
-    Map<String, String> checkToken(@RequestHeader("Authorization") String token);
+    Map<String, Object> checkToken(@RequestHeader("Authorization") String token);
 }

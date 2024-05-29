@@ -3,6 +3,7 @@ package br.com.acmeairlines.tickets.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,5 +36,6 @@ public class Ticket {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "ticket")
+    @JsonManagedReference
     private List<Message> messages;
 }

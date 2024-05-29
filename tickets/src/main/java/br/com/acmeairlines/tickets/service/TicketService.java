@@ -1,19 +1,18 @@
 package br.com.acmeairlines.tickets.service;
 
+import br.com.acmeairlines.tickets.model.Message;
+import br.com.acmeairlines.tickets.model.Ticket;
+import br.com.acmeairlines.tickets.repository.MessageRepository;
+import br.com.acmeairlines.tickets.repository.TicketRepository;
 import br.com.acmeairlines.tickets.client.UserClient;
 import br.com.acmeairlines.tickets.client.UserDTO;
-import br.com.acmeairlines.tickets.model.Ticket;
-import br.com.acmeairlines.tickets.repository.TicketRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -23,111 +22,64 @@ public class TicketService {
     private TicketRepository ticketRepository;
 
     @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
     private UserClient userClient;
 
-    public Ticket save(Ticket ticket) {
+    public Ticket createTicket(Long userId, String title, String description) {
+        Ticket ticket = new Ticket();
+        ticket.setUserId(userId);
+        ticket.setTitle(title);
+        ticket.setDescription(description);
+        ticket.setStatus("OPEN");
         ticket.setCreatedAt(LocalDateTime.now());
         ticket.setUpdatedAt(LocalDateTime.now());
+
         return ticketRepository.save(ticket);
     }
 
-    public Optional<Ticket> findById(Long id) {
-        return ticketRepository.findById(id);
+    public Ticket updateTicket(Long ticketId, String status) {
+        Optional<Ticket> optionalTicket = ticketRepository.findById(ticketId);
+        if (optionalTicket.isPresent()) {
+            Ticket ticket = optionalTicket.get();
+            ticket.setStatus(status);
+            ticket.setUpdatedAt(LocalDateTime.now());
+            return ticketRepository.save(ticket);
+        }
+        throw new RuntimeException("Ticket not found with id: " + ticketId);
     }
 
-    public List<Ticket> findByUserId(Long userId) {
-        return ticketRepository.findByUserId(userId);
+    public Optional<Ticket> getTicketById(Long ticketId) {
+        return ticketRepository.findById(ticketId);
     }
 
-    public void deleteById(Long id) {
-        ticketRepository.deleteById(id);
-    }
-
-    public Ticket update(Ticket ticket) {
-        ticket.setUpdatedAt(LocalDateTime.now());
-        return ticketRepository.save(ticket);
-    }
-
-    public boolean canAccessTicket(Long ticketId, UserDTO userDTO) {
-        return findById(ticketId)
-                .map(ticket -> ticket.getUserId().equals(userDTO.getId()) || userDTO.getRoles().contains("ROLE_ADMIN"))
-                .orElse(false);
-    }
-
-    public Ticket createTicket(Ticket ticket) {
-        return save(ticket);
-    }
-
-    public Page<Ticket> findAllTickets(Pageable pageable) {
+    public Page<Ticket> getAllTickets(Pageable pageable) {
         return ticketRepository.findAll(pageable);
     }
-
-    public Ticket getTicket(Long id, String token) {
-        Map<String, String> tokenResponse = userClient.checkToken(token);
-
-        if (tokenResponse.containsKey("error")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-        }
-
-        Optional<Ticket> ticket = findById(id);
-        if (ticket.isPresent()) {
-            String userEmail = tokenResponse.get("email");
-            UserDTO userDTO = userClient.getUserByEmail(userEmail);
-            if (ticket.get().getUserId().equals(userDTO.getId()) || userDTO.getRoles().contains("ROLE_ADMIN")) {
-                return ticket.get();
-            } else {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-            }
-        }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ticket not found");
-    }
-
-    public List<Ticket> getTicketsByUserId(Long userId, String token) {
-        Map<String, String> tokenResponse = userClient.checkToken(token);
-
-        if (tokenResponse.containsKey("error")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-        }
-
-        String userEmail = tokenResponse.get("email");
-        UserDTO userDTO = userClient.getUserByEmail(userEmail);
-        if (userDTO.getId().equals(userId) || userDTO.getRoles().contains("ROLE_ADMIN")) {
-            return findByUserId(userId);
-        }
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-    }
-
-    public void deleteTicket(Long id, String token) {
-        Map<String, String> tokenResponse = userClient.checkToken(token);
-
-        if (tokenResponse.containsKey("error")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-        }
-
-        String userEmail = tokenResponse.get("email");
-        UserDTO userDTO = userClient.getUserByEmail(userEmail);
-        Optional<Ticket> ticket = findById(id);
-        if (ticket.isPresent() && (ticket.get().getUserId().equals(userDTO.getId()) || userDTO.getRoles().contains("ROLE_ADMIN"))) {
-            deleteById(id);
+    public void deleteTicket(Long ticketId) {
+        if (ticketRepository.existsById(ticketId)) {
+            ticketRepository.deleteById(ticketId);
         } else {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            throw new RuntimeException("Ticket not found with id: " + ticketId);
         }
     }
 
-    public Ticket updateTicket(Long id, Ticket ticket, String token) {
-        Map<String, String> tokenResponse = userClient.checkToken(token);
+    public Message addMessage(Long ticketId, Long senderId, String messageText) {
+        Message message = new Message();
+        message.setTicketId(ticketId);
+        message.setSenderId(senderId);
+        message.setMessage(messageText);
+        message.setTimestamp(LocalDateTime.now());
 
-        if (tokenResponse.containsKey("error")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-        }
+        return messageRepository.save(message);
+    }
 
-        String userEmail = tokenResponse.get("email");
-        UserDTO userDTO = userClient.getUserByEmail(userEmail);
-        Optional<Ticket> existingTicket = findById(id);
-        if (existingTicket.isPresent() && (existingTicket.get().getUserId().equals(userDTO.getId()) || userDTO.getRoles().contains("ROLE_ADMIN"))) {
-            ticket.setId(id);
-            return update(ticket);
-        }
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+    public List<Message> getMessagesByTicketId(Long ticketId) {
+        return messageRepository.findByTicketId(ticketId);
+    }
+
+    public UserDTO getUserById(Long userId) {
+        return userClient.getUserById(userId);
     }
 }
