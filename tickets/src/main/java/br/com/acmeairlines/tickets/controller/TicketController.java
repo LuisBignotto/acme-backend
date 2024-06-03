@@ -54,20 +54,17 @@ public class TicketController {
 
     @PostMapping("/{ticketId}/messages")
     public ResponseEntity<Message> addMessage(@PathVariable Long ticketId, @RequestBody MessageCreateDTO messageCreateDTO) {
-        Message newMessage = ticketService.addMessage(ticketId, messageCreateDTO.getSenderId(), messageCreateDTO.getMessage());
-        return ResponseEntity.ok(newMessage);
+        return ResponseEntity.ok(ticketService.addMessage(ticketId, messageCreateDTO.getSenderId(), messageCreateDTO.getMessage()));
     }
 
     @GetMapping("/{ticketId}/messages")
     public ResponseEntity<List<Message>> getMessagesByTicketId(@PathVariable Long ticketId) {
-        List<Message> messages = ticketService.getMessagesByTicketId(ticketId);
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(ticketService.getMessagesByTicketId(ticketId));
     }
 
     @GetMapping("/users/{userId}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long userId) {
-        UserDTO user = ticketService.getUserById(userId);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<List<Ticket>> getUserById(@RequestHeader("Authorization") String token, @PathVariable Long userId) {
+        return ResponseEntity.ok(ticketService.getUserById(token, userId));
     }
 }
 

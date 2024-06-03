@@ -12,10 +12,10 @@ import java.util.Map;
 public interface UserClient {
 
     @GetMapping("/users/{id}")
-    UserDTO getUserById(@PathVariable("id") Long id);
+    UserDTO getUserById(@RequestHeader("Authorization") String token, @PathVariable("id") Long id);
 
     @GetMapping("/search")
-    UserDTO getUserByEmail(@RequestParam("email") String email);
+    UserDTO getUserByEmail(@RequestHeader("Authorization") String token, @RequestParam("email") String email);
 
     @GetMapping("/users/check")
     Map<String, Object> checkToken(@RequestHeader("Authorization") String token);

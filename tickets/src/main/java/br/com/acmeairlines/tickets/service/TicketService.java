@@ -79,7 +79,8 @@ public class TicketService {
         return messageRepository.findByTicketId(ticketId);
     }
 
-    public UserDTO getUserById(Long userId) {
-        return userClient.getUserById(userId);
+    public List<Ticket> getUserById(String token, Long userId) {
+        UserDTO user = userClient.getUserById(token, userId);
+        return ticketRepository.findByUserId(user.getId());
     }
 }
