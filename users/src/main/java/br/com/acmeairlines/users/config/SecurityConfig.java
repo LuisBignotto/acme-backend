@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/users/register", "/users/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/users/validate", "/users/check").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/users/me").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users").hasAnyRole("ADMIN", "SUPPORT")
                         .requestMatchers(HttpMethod.GET, "/users/{id}").hasAnyRole("ADMIN", "SUPPORT")
                         .requestMatchers(HttpMethod.GET, "/users/cpf/{cpf}").hasAnyRole("ADMIN", "SUPPORT")

@@ -14,9 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -71,6 +69,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getCompleteUserInfo(@RequestHeader("Authorization") String token) {
         String tokenWithoutBearer = token.substring(7);
+
         Map<String, Object> tokenResponse = userService.validateToken(tokenWithoutBearer);
 
         if (tokenResponse.containsKey("error")) {
