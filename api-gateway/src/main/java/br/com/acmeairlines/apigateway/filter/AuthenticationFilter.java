@@ -32,7 +32,15 @@ public class AuthenticationFilter implements GatewayFilter {
         return userService.validateToken(token)
                 .flatMap(isValid -> {
                     if (isValid) {
-                        return chain.filter(exchange);
+                        return userService.checkToken(token)
+                                .flatMap(tokenDetails -> {
+                                    if (tokenDetails.containsKey("role")) {
+                                        return chain.filter(exchange);
+                                    } else {
+                                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                                        return exchange.getResponse().setComplete();
+                                    }
+                                });
                     } else {
                         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                         return exchange.getResponse().setComplete();
