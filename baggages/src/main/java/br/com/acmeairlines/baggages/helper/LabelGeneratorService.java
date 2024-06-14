@@ -30,9 +30,7 @@ public class LabelGeneratorService {
         PDPage page = new PDPage();
         document.addPage(page);
 
-        String qrCodeText = id.toString();
-
-        BufferedImage qrCodeImage = generateQRCodeImage(qrCodeText);
+        BufferedImage qrCodeImage = generateQRCodeImage(tag);
 
         PDImageXObject pdImage = PDImageXObject.createFromByteArray(document, bufferedImageToByteArray(qrCodeImage), "QR Code");
 
