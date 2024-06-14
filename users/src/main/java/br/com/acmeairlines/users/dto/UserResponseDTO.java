@@ -9,6 +9,6 @@ public record UserResponseDTO (
         String name,
         String phone,
         AddressDTO address,
-        List<String> roles,
+        String role,
         List<BaggageDTO> baggages
 ) {}

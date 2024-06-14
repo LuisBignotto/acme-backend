@@ -1,6 +1,7 @@
 package br.com.acmeairlines.users.controller;
 
 import br.com.acmeairlines.users.dto.*;
+import br.com.acmeairlines.users.helper.RoleMapper;
 import br.com.acmeairlines.users.model.UserModel;
 import br.com.acmeairlines.users.service.UserService;
 import jakarta.validation.Valid;
@@ -13,7 +14,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -38,11 +41,14 @@ public class UserController {
 
         var token = userService.generateToken((UserModel) auth.getPrincipal());
 
-        if(token == null){
+        if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        return ResponseEntity.ok(new TokenDTO(token));
+        String roleName = ((UserModel) auth.getPrincipal()).getRole().getRoleName();
+        int roleId = RoleMapper.getRoleId(roleName);
+
+        return ResponseEntity.ok(new TokenDTO(((UserModel) auth.getPrincipal()).getId(), token, String.valueOf(roleId)));
     }
 
     @GetMapping("/validate")
@@ -76,15 +82,9 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PostMapping("/{userId}/roles/{roleName}")
-    public ResponseEntity<UserDTO> addRoleToUser(@PathVariable Long userId, @PathVariable String roleName) {
-        UserDTO updatedUser = userService.addRoleToUser(userId, roleName);
-        return ResponseEntity.ok(updatedUser);
-    }
-
-    @DeleteMapping("/{userId}/roles/{roleName}")
-    public ResponseEntity<UserDTO> removeRoleFromUser(@PathVariable Long userId, @PathVariable String roleName) {
-        UserDTO updatedUser = userService.removeRoleFromUser(userId, roleName);
+    @PostMapping("/{userId}/role/{roleName}")
+    public ResponseEntity<UserDTO> updateRoleOfUser(@PathVariable Long userId, @PathVariable String roleName) {
+        UserDTO updatedUser = userService.updateRoleOfUser(userId, roleName);
         return ResponseEntity.ok(updatedUser);
     }
 

@@ -9,5 +9,5 @@ public record UserDTO(
         String name,
         String phone,
         AddressDTO address,
-        List<String> roles
+        String role
 ) {}

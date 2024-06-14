@@ -1,3 +1,3 @@
 package br.com.acmeairlines.users.dto;
 
-public record TokenDTO(String token) {}
+public record TokenDTO(Long id, String token, String role) {}

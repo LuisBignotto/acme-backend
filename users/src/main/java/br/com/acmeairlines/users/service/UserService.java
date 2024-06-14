@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -55,9 +54,7 @@ public class UserService implements UserDetailsService {
             return JWT.create()
                     .withIssuer("acme-auth-api")
                     .withSubject(String.valueOf(user.getId()))
-                    .withClaim("roles", user.getRoles().stream()
-                            .map(RoleModel::getRoleName)
-                            .collect(Collectors.toList()))
+                    .withClaim("role", user.getRole().getRoleName())
                     .withExpiresAt(genExpirationDate())
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
@@ -74,7 +71,7 @@ public class UserService implements UserDetailsService {
                     .verify(token);
             Map<String, Object> tokenDetails = new HashMap<>();
             tokenDetails.put("id", decodedJWT.getSubject());
-            tokenDetails.put("roles", decodedJWT.getClaim("roles").asList(String.class));
+            tokenDetails.put("role", decodedJWT.getClaim("role").asString());
             return tokenDetails;
         } catch (JWTVerificationException exception) {
             return Collections.singletonMap("error", "invalid");
@@ -87,21 +84,26 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+        UserModel user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+
+        if (user.getRole() == null) {
+            throw new UsernameNotFoundException("User does not have a role assigned");
+        }
+
+        return user;
     }
 
     @Transactional
     public UserDTO createUser(@Valid CreateUserDTO createUserDTO) {
 
-        Optional<UserModel> check_email = userRepository.findByEmail(createUserDTO.email());
-
-        if(check_email.isPresent()){
+        Optional<UserModel> checkEmail = userRepository.findByEmail(createUserDTO.email());
+        if(checkEmail.isPresent()){
             throw new IllegalArgumentException("Email already in use.");
         }
 
-        Optional<UserModel> check_cpf = userRepository.findByEmail(createUserDTO.cpf());
-
-        if(check_cpf.isPresent()){
+        Optional<UserModel> checkCpf = userRepository.findByCpf(createUserDTO.cpf());
+        if(checkCpf.isPresent()){
             throw new IllegalArgumentException("CPF already in use.");
         }
 
@@ -118,7 +120,7 @@ public class UserService implements UserDetailsService {
                     return roleRepository.save(newRole);
                 });
 
-        user.getRoles().add(defaultRole);
+        user.setRole(defaultRole);
 
         UserModel savedUser = userRepository.save(user);
         return convertToDTO(savedUser);
@@ -242,33 +244,20 @@ public class UserService implements UserDetailsService {
                 userDTO.name(),
                 userDTO.phone(),
                 userDTO.address(),
-                userDTO.roles(),
+                userDTO.role(),
                 baggages
         );
     }
 
     @Transactional
-    public UserDTO addRoleToUser(Long userId, String roleName) {
+    public UserDTO updateRoleOfUser(Long userId, String roleName) {
         UserModel user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         RoleModel role = roleRepository.findByRoleName(roleName)
                 .orElseThrow(() -> new RuntimeException("Role not found with name: " + roleName));
 
-        user.getRoles().add(role);
-        UserModel updatedUser = userRepository.save(user);
-        return convertToDTO(updatedUser);
-    }
-
-    @Transactional
-    public UserDTO removeRoleFromUser(Long userId, String roleName) {
-        UserModel user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-
-        RoleModel role = roleRepository.findByRoleName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role not found with name: " + roleName));
-
-        user.getRoles().remove(role);
+        user.setRole(role);
         UserModel updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
     }
@@ -289,9 +278,7 @@ public class UserService implements UserDetailsService {
             );
         }
 
-        List<String> roles = user.getRoles().stream()
-                .map(RoleModel::getRoleName)
-                .collect(Collectors.toList());
+        String role = user.getRole().getRoleName();
 
         return new UserDTO(
                 user.getId(),
@@ -300,8 +287,9 @@ public class UserService implements UserDetailsService {
                 user.getName(),
                 user.getPhone(),
                 addressDTO,
-                roles
+                role
         );
     }
-
 }
+
+

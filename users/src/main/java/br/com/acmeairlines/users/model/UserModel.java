@@ -42,19 +42,13 @@ public class UserModel implements UserDetails, Serializable {
     @JsonManagedReference
     private AddressModel address;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "tb_user_role",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<RoleModel> roles = new HashSet<>();
-
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private RoleModel role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream().map(x -> new SimpleGrantedAuthority(x.getRoleName()))
-                .collect(Collectors.toList());
+        return Set.of(new SimpleGrantedAuthority(role.getRoleName()));
     }
 
     @Override
@@ -82,3 +76,5 @@ public class UserModel implements UserDetails, Serializable {
         return true;
     }
 }
+
+
