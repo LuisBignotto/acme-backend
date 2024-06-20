@@ -17,7 +17,7 @@ public class CorsConfig {
         config.addAllowedOrigin("*");
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
         source.registerCorsConfiguration("/**", config);
@@ -27,12 +27,13 @@ public class CorsConfig {
 
     @Bean
     public CorsResponseFilter corsResponseFilter() {
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedOrigin("*");
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(false);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
         source.registerCorsConfiguration("/**", config);
 
         return new CorsResponseFilter(source);
