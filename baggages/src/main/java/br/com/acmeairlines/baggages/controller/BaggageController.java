@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import br.com.acmeairlines.baggages.helper.LabelGeneratorService;
@@ -95,10 +96,10 @@ public class BaggageController {
 
             HttpHeaders headers = new HttpHeaders();
             headers.add("Content-Disposition", "attachment; filename=label.pdf");
+            headers.setContentType(MediaType.APPLICATION_PDF);
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (WriterException | IOException e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }
